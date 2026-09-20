@@ -67,3 +67,7 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+#Kicad history
+pcb/.history/
+firmware/n32g435/custom_firmware/build
