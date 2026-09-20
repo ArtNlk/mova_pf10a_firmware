@@ -65,7 +65,7 @@
 #define SYSCLK_USE_HSE_PLL 4
 
 #ifndef SYSCLK_FREQ
-#define SYSCLK_FREQ 108000000
+#define SYSCLK_FREQ HSI_VALUE
 #endif
 
 /*
@@ -77,7 +77,7 @@
 ** SYSCLK_USE_HSE_PLL  **
 */
 #ifndef SYSCLK_SRC
-#define SYSCLK_SRC SYSCLK_USE_HSE_PLL
+#define SYSCLK_SRC SYSCLK_USE_HSI
 #endif
 
 #define PLL_DIV2_DISABLE 0x00000000

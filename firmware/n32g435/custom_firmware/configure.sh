@@ -1,3 +1,3 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-cmake -DCMAKE_TOOLCHAIN_FILE="bsp/cmake/n32g435.cmake" ${SCRIPT_DIR} "${@:2}"
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DCMAKE_TOOLCHAIN_FILE="bsp/cmake/n32g435.cmake" ${SCRIPT_DIR} "${@:2}"

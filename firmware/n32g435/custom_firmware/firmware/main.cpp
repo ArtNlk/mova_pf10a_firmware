@@ -4,13 +4,35 @@ extern "C" {
 
 #include "n32g43x.h"
 
-//Led1-PA10
-#define LED1_PORT   GPIOB
-#define LED1_PIN    GPIO_PIN_10
+#include "FreeRTOS.h"
+#include "task.h"
 
 #ifdef __cplusplus
 }
 #endif
+
+struct LEDParameters {
+    uint32_t flashRate;
+    GPIO_Module* ledPort;
+    uint16_t ledPin;
+};
+
+//Led1-PB10
+#define LED1_PORT   GPIOB
+#define LED1_PIN    GPIO_PIN_10
+
+//Led2-PB11
+#define LED2_PORT   GPIOB
+#define LED2_PIN    GPIO_PIN_11
+
+#define STACK_SIZE 200
+static StaticTask_t led1TaskBuffer;
+static StackType_t led1TaskStack[ STACK_SIZE ];
+static LEDParameters led1TaskParameters{portTICK_PERIOD_MS*1000,LED1_PORT, LED1_PIN};
+
+static StaticTask_t led2TaskBuffer;
+static StackType_t led2TaskStack[ STACK_SIZE ];
+static LEDParameters led2TaskParameters{portTICK_PERIOD_MS*2000,LED2_PORT, LED2_PIN};
 
 void LedInit(GPIO_Module* GPIOx, uint16_t Pin)
 {
@@ -62,25 +84,67 @@ void LedOff(GPIO_Module* GPIOx, uint16_t Pin)
     GPIOx->PBC = Pin;
 }
 
-void Delay(uint32_t count)
+static void ledFlashTask( void * pvParameters )
 {
-    for (; count > 0; count--)
-        asm("");
+    LEDParameters * ledParams;
+
+    /* Queue a message for printing to say the task has started. */
+    // vPrintDisplayMessage( &pcTaskStartMsg );
+
+    ledParams = static_cast<LEDParameters*>(pvParameters);
+
+    LedOn( ledParams->ledPort, ledParams->ledPin );
+
+    for( ; ; )
+    {
+        /* Delay for half the flash period then turn the LED on. */
+        vTaskDelay( ledParams->flashRate);
+        LedOn( ledParams->ledPort, ledParams->ledPin );
+
+        // /* Delay for half the flash period then turn the LED off. */
+        vTaskDelay( ledParams->flashRate);
+        LedOff( ledParams->ledPort, ledParams->ledPin );
+    }
+}
+
+void setupHardware()
+{
+    LedInit(GPIOB, LED1_PIN);
+    LedInit(GPIOB, LED2_PIN);
+}
+
+void startTasks()
+{
+    xTaskCreateStatic(
+        &ledFlashTask,
+        "TLED1",
+        STACK_SIZE,
+        &led1TaskParameters,
+        1,
+        led1TaskStack,
+        &led1TaskBuffer);
+
+    xTaskCreateStatic(
+        &ledFlashTask,
+        "TLED2",
+        STACK_SIZE,
+        &led2TaskParameters,
+        1,
+        led2TaskStack,
+        &led2TaskBuffer);
 }
 
 int main()
 {
-    LedInit(GPIOB, LED1_PIN);
+    setupHardware();
 
-    /*Turn on Led1*/
-    LedOn(GPIOB, LED1_PIN);
-    
+    startTasks();
+
+    vTaskStartScheduler();
+
     while(true)
     {
-        LedOff(GPIOB, LED1_PIN);
-        Delay(0x28FFFF);
-        LedOn(GPIOB, LED1_PIN);
-        Delay(0x28FFFF);
+
     }
 
     return 0;
