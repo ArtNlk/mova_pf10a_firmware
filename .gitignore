@@ -71,3 +71,4 @@ Testing/
 #Kicad history
 pcb/.history/
 firmware/n32g435/custom_firmware/build
+*.lck
