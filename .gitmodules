@@ -1,0 +1,3 @@
+[submodule "firmware/n32g435/custom_firmware/logger-rb-freertos"]
+	path = firmware/n32g435/custom_firmware/logger-rb-freertos
+	url = https://github.com/nh-ee/logger-rb-freertos.git
