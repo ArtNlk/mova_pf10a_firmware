@@ -38,7 +38,7 @@ add_library(n32g43x_bsp
     ${CMAKE_CURRENT_SOURCE_DIR}/CMSIS/device/startup/startup_n32g43x_gcc.s
 )
 
-target_compile_options(n32g43x_bsp PRIVATE -Os -flto)
+target_compile_options(n32g43x_bsp PRIVATE -Os -flto -g)
 
 target_include_directories(n32g43x_bsp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/n32g43x_std_periph_driver/inc)
 # target_include_directories(n32g43x_bsp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/n32g43x_usbfs_driver/inc)

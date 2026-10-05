@@ -7,7 +7,7 @@ add_executable(N32G435_fw.elf
 
 target_include_directories(N32G435_fw.elf PUBLIC ./include)
 
-target_compile_options(N32G435_fw.elf PRIVATE -Os -flto)
+target_compile_options(N32G435_fw.elf PRIVATE -Os -flto -g)
 target_link_options(N32G435_fw.elf PRIVATE "-Wl,-Map=${CMAKE_BINARY_DIR}/N32G435_fw.map")
 target_link_libraries(N32G435_fw.elf n32g43x_bsp)
 target_link_libraries(N32G435_fw.elf FreeRTOS)
