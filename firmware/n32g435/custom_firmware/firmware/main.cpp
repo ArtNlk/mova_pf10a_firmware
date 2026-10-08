@@ -10,16 +10,20 @@ extern "C" {
 }
 #endif
 
+#include "MainTask.h"
 #include "UITask.h"
 #include "PowerManagerTask.h"
 #include "UartLogger.h"
 
 static QueueHandle_t UITaskEventQueue = nullptr;
+static QueueHandle_t PMTaskEventQueue = nullptr;
+static QueueHandle_t MainTaskEventQueue = nullptr;
 
 void startTasks()
 {
     static UITask uiTask(&UITaskEventQueue);
-    static PowerManagerTask pmTask;
+    static PowerManagerTask pmTask(&PMTaskEventQueue);
+    static MainTask mainTask(&MainTaskEventQueue);
 }
 
 int main()

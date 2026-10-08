@@ -3,12 +3,16 @@
 
 #include "n32g43x.h"
 
-#include "StaticTask.h"
+#include "FreeRTOS.h"
+#include "queue.h"
 
-class PowerManagerTask : StaticTask<256>
+#include "StaticTask.h"
+#include "PMTaskEvents.h"
+
+class PowerManagerTask : StaticTask<256, 32, PMTaskEvent>
 {
 public:
-    PowerManagerTask();
+    PowerManagerTask(QueueHandle_t* outEventQueue);
     ~PowerManagerTask() = default;
 
     void initHardware();

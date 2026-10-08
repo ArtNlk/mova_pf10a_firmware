@@ -1,5 +1,6 @@
 add_executable(N32G435_fw.elf 
     src/StaticTask.cpp
+    src/MainTask.cpp
     src/UITask.cpp
     src/PowerManagerTask.cpp
     main.cpp

@@ -4,7 +4,7 @@
 #include "FreeRTOS.h"
 
 enum UITaskEventType : uint8_t {
-    NULL_EVENT,
+    UI_NULL_EVENT,
     MAIN_BUTTON_PRESSED,
     MAIN_BUTTON_RELEASED,
     SET_UI_PATTERN

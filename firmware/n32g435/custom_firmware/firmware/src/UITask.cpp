@@ -52,18 +52,11 @@ void UITask::UITaskMain(void* taskParam)
 }
 
 UITask::UITask(QueueHandle_t* outEventQueue):
-    StaticTask<256>(&UITaskMain, "UITask", this, 1),
+    StaticTask(&UITaskMain, "UITask", this, 1, outEventQueue),
     m_mainButtonPressStartTick(InvalidMainButtonPressTick)
 {
-    m_eventQueue = xQueueCreateStatic(QueueSize,sizeof(UITaskEvent),m_eventQueueStorage.data(), &m_eventQueueBuffer);
-    *outEventQueue = m_eventQueue;
     initLedPins();
     initButtonPins();
-}
-
-QueueHandle_t UITask::eventQueue() const
-{
-    return m_eventQueue;
 }
 
 void UITask::initLedPins()

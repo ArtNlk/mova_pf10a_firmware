@@ -1,7 +1,9 @@
 #include "PowerManagerTask.h"
 
-PowerManagerTask::PowerManagerTask() :
-    StaticTask<256>(&PowerManagerTaskMain, "PMTask", this, 1)
+#include "UartLogger.h"
+
+PowerManagerTask::PowerManagerTask(QueueHandle_t* outEventQueue) :
+    StaticTask(&PowerManagerTaskMain, "PMTask", this, 1, outEventQueue)
 {
     initHardware();
 }
@@ -23,13 +25,15 @@ void PowerManagerTask::initHardware()
 
 void PowerManagerTask::PowerManagerTaskMain(void *taskParam)
 {
+    log() << "PowerManagerTask started";
     PowerManagerTask* task = static_cast<PowerManagerTask*>(taskParam);
-
-    task->toggleWifiModule(true);
-
+    PMTaskEvent event = PMTaskEvent();
     while(true)
     {
-        vTaskDelay(portTICK_PERIOD_MS*1000);
+        if(xQueueReceive(task->eventQueue(), &event, portTICK_PERIOD_MS*250) == errQUEUE_EMPTY)
+        {
+            continue;
+        }
     }
 }
 

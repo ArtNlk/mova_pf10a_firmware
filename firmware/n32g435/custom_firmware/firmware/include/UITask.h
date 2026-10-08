@@ -12,15 +12,13 @@
 
 #include "n32g43x.h"
 
-class UITask : public StaticTask<256>
+class UITask : public StaticTask<256, 32, UITaskEvent>
 {
 public:
     static const TickType_t InvalidMainButtonPressTick = std::numeric_limits<TickType_t>::max();
 
     UITask(QueueHandle_t* outEventQueue);
     ~UITask() = default;
-
-    QueueHandle_t eventQueue() const;
 
     static const uint16_t MainButtonInterruptLine = EXTI_LINE13;
 
@@ -55,12 +53,6 @@ protected:
     static void UITaskMain(void* taskParam);
 
     TickType_t m_mainButtonPressStartTick;
-
-    static const size_t QueueSize = 32;
-
-    QueueHandle_t m_eventQueue;
-    StaticQueue_t m_eventQueueBuffer;
-    std::array<uint8_t,QueueSize*sizeof(UITaskEvent)> m_eventQueueStorage;
 };
 
 #endif
