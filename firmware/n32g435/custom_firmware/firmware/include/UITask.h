@@ -2,27 +2,25 @@
 #define UITASK_H
 
 #include <array>
+#include <limits>
 
 #include "FreeRTOS.h"
 #include "queue.h"
 
 #include "StaticTask.h"
+#include "UITaskEvents.h"
 
 #include "n32g43x.h"
 
 class UITask : public StaticTask<256>
 {
 public:
+    static const TickType_t InvalidMainButtonPressTick = std::numeric_limits<TickType_t>::max();
+
     UITask(QueueHandle_t* outEventQueue);
     ~UITask() = default;
 
     QueueHandle_t eventQueue() const;
-
-    enum Event : uint8_t {
-        NULL_EVENT,
-        MAIN_BUTTON_PRESSED,
-        MAIN_BUTTON_RELEASED
-    };
 
     static const uint16_t MainButtonInterruptLine = EXTI_LINE13;
 
@@ -56,11 +54,13 @@ protected:
 
     static void UITaskMain(void* taskParam);
 
+    TickType_t m_mainButtonPressStartTick;
+
     static const size_t QueueSize = 32;
 
     QueueHandle_t m_eventQueue;
     StaticQueue_t m_eventQueueBuffer;
-    std::array<uint8_t,QueueSize*sizeof(Event)> m_eventQueueStorage;
+    std::array<uint8_t,QueueSize*sizeof(UITaskEvent)> m_eventQueueStorage;
 };
 
 #endif

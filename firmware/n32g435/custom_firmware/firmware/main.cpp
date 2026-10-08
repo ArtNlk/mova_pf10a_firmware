@@ -78,15 +78,18 @@ void EXTI15_10_IRQHandler(void)
         EXTI_ClrITPendBit(UITask::MainButtonInterruptLine);
         if(UITaskEventQueue != nullptr)
         {
-            UITask::Event temp = UITask::Event::NULL_EVENT;
+            UITaskEvent temp = UITaskEvent();
+            TickType_t eventTick = xTaskGetTickCountFromISR();
             if(GPIO_ReadInputDataBit(UITask::MainLedButtonPortB, UITask::MainButtonPin) == Bit_RESET)
             {
-                temp = UITask::Event::MAIN_BUTTON_PRESSED;
+                temp.eventType = UITaskEventType::MAIN_BUTTON_PRESSED;
+                temp.pressEventData.pressTick = eventTick;
                 xQueueSendFromISR(UITaskEventQueue, &temp, &yieldRequired);
             }
             else
             {
-                temp = UITask::Event::MAIN_BUTTON_RELEASED;
+                temp.eventType = UITaskEventType::MAIN_BUTTON_RELEASED;
+                temp.releaseEventData.releaseTick = eventTick;
                 xQueueSendFromISR(UITaskEventQueue, &temp, &yieldRequired);
             }
         }

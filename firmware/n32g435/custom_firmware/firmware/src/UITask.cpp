@@ -10,7 +10,7 @@ void UITask::UITaskMain(void* taskParam)
 {
     log() << "UITask started";
     UITask* task = static_cast<UITask*>(taskParam);
-    Event event = NULL_EVENT;
+    UITaskEvent event = UITaskEvent();
     while(true)
     {
         if(xQueueReceive(task->eventQueue(), &event, portTICK_PERIOD_MS*250) == errQUEUE_EMPTY)
@@ -19,25 +19,43 @@ void UITask::UITaskMain(void* taskParam)
             continue;
         }
 
-        log() << "Got event " << event;
+        log() << "Got event " << event.eventType;
 
-        switch(event)
+        switch(event.eventType)
         {
             case MAIN_BUTTON_PRESSED:
-                task->setButtonColor(GREEN);
+            {
+                task->m_mainButtonPressStartTick = event.pressEventData.pressTick;
                 break;
+            }
             
             case MAIN_BUTTON_RELEASED:
-                task->setButtonColor(RED);
+            {
+                const uint32_t pressDuration = pdTICKS_TO_MS(event.releaseEventData.releaseTick - task->m_mainButtonPressStartTick);
+                task->m_mainButtonPressStartTick = InvalidMainButtonPressTick;
+                
+                log() << "Got main press duration: " << pressDuration;
+
+                if(pressDuration > 1000)
+                {
+                    task->setButtonColor(RED);
+                }
+                else
+                {
+                    task->setButtonColor(GREEN);
+                }
+
                 break;
+            }
         }
     }
 }
 
 UITask::UITask(QueueHandle_t* outEventQueue):
-    StaticTask<256>(&UITaskMain, "UITask", this, 1)
+    StaticTask<256>(&UITaskMain, "UITask", this, 1),
+    m_mainButtonPressStartTick(InvalidMainButtonPressTick)
 {
-    m_eventQueue = xQueueCreateStatic(QueueSize,sizeof(Event),m_eventQueueStorage.data(), &m_eventQueueBuffer);
+    m_eventQueue = xQueueCreateStatic(QueueSize,sizeof(UITaskEvent),m_eventQueueStorage.data(), &m_eventQueueBuffer);
     *outEventQueue = m_eventQueue;
     initLedPins();
     initButtonPins();
