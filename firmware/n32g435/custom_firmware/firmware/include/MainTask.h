@@ -15,13 +15,12 @@ public:
     MainTask(QueueHandle_t* outEventQueue);
     ~MainTask() = default;
 
+    void setMotorTaskQueue(QueueHandle_t motorTaskQueue);
+
 protected:
     static void MainTaskMain(void* taskParam);
 
-    static const size_t QueueSize = 32;
-    QueueHandle_t m_eventQueue;
-    StaticQueue_t m_eventQueueBuffer;
-    std::array<uint8_t,QueueSize*sizeof(MainTaskEvent)> m_eventQueueStorage;
+    QueueHandle_t m_motorTaskQueue;
 };
 
 #endif

@@ -3,6 +3,8 @@
 
 #include "UartLogger.h"
 
+#include "MainTaskEvents.h"
+
 GPIO_Module* UITask::MainLedButtonPortB = GPIOB;
 GPIO_Module* UITask::BottomButtonPortC = GPIOC;
 
@@ -36,13 +38,24 @@ void UITask::UITaskMain(void* taskParam)
                 
                 log() << "Got main press duration: " << pressDuration;
 
-                if(pressDuration > 1000)
+                if(pressDuration > MinButtonPressDuration)
                 {
-                    task->setButtonColor(RED);
-                }
-                else
-                {
-                    task->setButtonColor(GREEN);
+                    MainTaskEvent buttonEvent;
+                    if(pressDuration < MaxShortButtonPressDuration)
+                    {
+                        buttonEvent.eventType = MainTaskEventType::MAIN_BUTTON_PRESS_SHORT;
+                        xQueueSendToBack(task->m_mainTaskEventQueue, &buttonEvent, pdMS_TO_TICKS(2));
+                    }
+                    else if(pressDuration < MaxLongButtonPressDuration)
+                    {
+                        buttonEvent.eventType = MainTaskEventType::MAIN_BUTTON_PRESS_LONG;
+                        xQueueSendToBack(task->m_mainTaskEventQueue, &buttonEvent, pdMS_TO_TICKS(2));
+                    }
+                    else
+                    {
+                        buttonEvent.eventType = MainTaskEventType::MAIN_BUTTON_PRESS_VERYLONG;
+                        xQueueSendToBack(task->m_mainTaskEventQueue, &buttonEvent, pdMS_TO_TICKS(2));
+                    }
                 }
 
                 break;
@@ -53,10 +66,16 @@ void UITask::UITaskMain(void* taskParam)
 
 UITask::UITask(QueueHandle_t* outEventQueue):
     StaticTask(&UITaskMain, "UITask", this, 1, outEventQueue),
-    m_mainButtonPressStartTick(InvalidMainButtonPressTick)
+    m_mainButtonPressStartTick(InvalidMainButtonPressTick),
+    m_mainTaskEventQueue(nullptr)
 {
     initLedPins();
     initButtonPins();
+}
+
+void UITask::setMainTaskEventQueue(QueueHandle_t mainTaskEventQueue)
+{
+    m_mainTaskEventQueue = mainTaskEventQueue;
 }
 
 void UITask::initLedPins()
@@ -107,6 +126,6 @@ void UITask::initButtonPins()
 
 void UITask::setButtonColor(ButtonColor color)
 {
-    log() << "Button color set to " << static_cast<uint32_t>(color);
+    //log() << "Button color set to " << static_cast<uint32_t>(color);
     MainLedButtonPortB->PBSC = (color) | ((color ^ ButtonColor::WHITE) << 16);
 }

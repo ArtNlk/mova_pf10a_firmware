@@ -13,17 +13,28 @@ extern "C" {
 #include "MainTask.h"
 #include "UITask.h"
 #include "PowerManagerTask.h"
+#include "MotorTask.h"
 #include "UartLogger.h"
 
 static QueueHandle_t UITaskEventQueue = nullptr;
 static QueueHandle_t PMTaskEventQueue = nullptr;
+static QueueHandle_t MotorTaskEventQueue = nullptr;
 static QueueHandle_t MainTaskEventQueue = nullptr;
 
-void startTasks()
+static MotorTask* motorTaskPtr = nullptr;
+
+void initTasks()
 {
+    static MainTask mainTask(&MainTaskEventQueue);
     static UITask uiTask(&UITaskEventQueue);
     static PowerManagerTask pmTask(&PMTaskEventQueue);
-    static MainTask mainTask(&MainTaskEventQueue);
+    static MotorTask motorTask(&MotorTaskEventQueue);
+
+    mainTask.setMotorTaskQueue(MotorTaskEventQueue);
+    uiTask.setMainTaskEventQueue(MainTaskEventQueue);
+
+
+    motorTaskPtr = &motorTask;
 }
 
 int main()
@@ -32,7 +43,7 @@ int main()
 
     log() << "Main started";
 
-    startTasks();
+    initTasks();
 
     vTaskStartScheduler();
 
@@ -70,6 +81,20 @@ void DMA_Channel1_IRQHandler(void)
 
     /* Clear DMA channel Half Transfer, Transfer Complete and Global interrupt pending bits */
     DMA_ClrIntPendingBit(DMA_INT_GLB1 | DMA_INT_TXC1 | DMA_INT_HTX1 | DMA_INT_ERR1, DMA);
+}
+
+//Spin control interrupt
+void EXTI9_5_IRQHandler(void)
+{
+    GPIOB->PBSC = (1024u) | ((1024u ^ 7168u) << 16);
+    if (RESET != EXTI_GetStatusFlag(MotorTask::SpinCtlReadEXTILine))
+    {
+        if(motorTaskPtr != nullptr)
+        {
+            motorTaskPtr->onPortionDispensed();
+        }
+        EXTI_ClrITPendBit(MotorTask::SpinCtlReadEXTILine);
+    }
 }
 
 //Main button press/release IRQ
