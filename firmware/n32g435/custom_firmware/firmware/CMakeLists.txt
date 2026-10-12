@@ -3,7 +3,7 @@ add_executable(N32G435_fw.elf
     src/MainTask.cpp
     src/UITask.cpp
     src/PowerManagerTask.cpp
-    src/MotorTask.cpp
+    src/FeedMotor.cpp
     main.cpp
     )
 

@@ -9,18 +9,20 @@
 #include "MainTaskEvents.h"
 #include "StaticTask.h"
 
+#include "FeedMotor.h"
+
 class MainTask : StaticTask<256, 32, MainTaskEvent>
 {
 public:
     MainTask(QueueHandle_t* outEventQueue);
     ~MainTask() = default;
 
-    void setMotorTaskQueue(QueueHandle_t motorTaskQueue);
+    void onMotorTickInterrupt();
 
 protected:
     static void MainTaskMain(void* taskParam);
 
-    QueueHandle_t m_motorTaskQueue;
+    FeedMotor m_feedMotor;
 };
 
 #endif

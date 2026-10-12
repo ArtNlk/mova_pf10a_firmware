@@ -13,28 +13,25 @@ extern "C" {
 #include "MainTask.h"
 #include "UITask.h"
 #include "PowerManagerTask.h"
-#include "MotorTask.h"
 #include "UartLogger.h"
+
+#include "FeedMotor.h"
 
 static QueueHandle_t UITaskEventQueue = nullptr;
 static QueueHandle_t PMTaskEventQueue = nullptr;
-static QueueHandle_t MotorTaskEventQueue = nullptr;
 static QueueHandle_t MainTaskEventQueue = nullptr;
 
-static MotorTask* motorTaskPtr = nullptr;
+static MainTask* MainTaskPtr = nullptr;
 
 void initTasks()
 {
     static MainTask mainTask(&MainTaskEventQueue);
     static UITask uiTask(&UITaskEventQueue);
     static PowerManagerTask pmTask(&PMTaskEventQueue);
-    static MotorTask motorTask(&MotorTaskEventQueue);
 
-    mainTask.setMotorTaskQueue(MotorTaskEventQueue);
+    MainTaskPtr = &mainTask;
+
     uiTask.setMainTaskEventQueue(MainTaskEventQueue);
-
-
-    motorTaskPtr = &motorTask;
 }
 
 int main()
@@ -86,14 +83,13 @@ void DMA_Channel1_IRQHandler(void)
 //Spin control interrupt
 void EXTI9_5_IRQHandler(void)
 {
-    GPIOB->PBSC = (1024u) | ((1024u ^ 7168u) << 16);
-    if (RESET != EXTI_GetStatusFlag(MotorTask::SpinCtlReadEXTILine))
+    if (RESET != EXTI_GetStatusFlag(FeedMotor::SpinCtlReadEXTILine))
     {
-        if(motorTaskPtr != nullptr)
+        if(MainTaskPtr != nullptr)
         {
-            motorTaskPtr->onPortionDispensed();
+            MainTaskPtr->onMotorTickInterrupt();
         }
-        EXTI_ClrITPendBit(MotorTask::SpinCtlReadEXTILine);
+        EXTI_ClrITPendBit(FeedMotor::SpinCtlReadEXTILine);
     }
 }
 

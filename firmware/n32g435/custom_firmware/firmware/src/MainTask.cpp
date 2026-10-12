@@ -1,17 +1,16 @@
 #include "MainTask.h"
 
 #include "UartLogger.h"
-#include "MotorTaskEvents.h"
 
 MainTask::MainTask(QueueHandle_t *outEventQueue) :
     StaticTask(&MainTaskMain, "MainTask", this, 1, outEventQueue),
-    m_motorTaskQueue(nullptr)
+    m_feedMotor()
 {
 }
 
-void MainTask::setMotorTaskQueue(QueueHandle_t motorTaskQueue)
+void MainTask::onMotorTickInterrupt()
 {
-    m_motorTaskQueue = motorTaskQueue;
+    m_feedMotor.onMotorTickInterrupt();
 }
 
 void MainTask::MainTaskMain(void *taskParam)
@@ -32,10 +31,7 @@ void MainTask::MainTaskMain(void *taskParam)
         {
             case MainTaskEventType::MAIN_BUTTON_PRESS_SHORT:
             {
-                MotorTaskEvent motorEvent;
-                motorEvent.eventType = MotorTaskEventType::MOTOR_DISPENSE_N;
-                motorEvent.dispenseEventData.count = 5;
-                xQueueSendToBack(task->m_motorTaskQueue, &motorEvent, pdMS_TO_TICKS(10));
+                task->m_feedMotor.dispensePortions(5);
                 break;
             }
             case MainTaskEventType::MAIN_BUTTON_PRESS_LONG:

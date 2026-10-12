@@ -1,70 +1,48 @@
-#include "MotorTask.h"
+#include "FeedMotor.h"
 
 #include "UartLogger.h"
 
-GPIO_Module* MotorTask::GPIOPortA = GPIOA;
+GPIO_Module* FeedMotor::GPIOPortA = GPIOA;
 
-MotorTask::MotorTask(QueueHandle_t *outEventQueue) :
-    StaticTask(&MotorTaskMain, "MotorTask", this, 1, outEventQueue),
-    m_remainingPortionCount(0)
+FeedMotor::FeedMotor() :
+    m_remainingPortionsCount(0)
 {
     initMotorPins();
     setupSpinCtlInterrupt();
 }
 
-void MotorTask::onPortionDispensed()
+void FeedMotor::dispensePortions(uint8_t portionCount)
 {
-    if(m_remainingPortionCount != 0)
+    m_remainingPortionsCount += portionCount + 1;
+    setMotorState(MotorState::MOTOR_FORWARD);
+}
+
+void FeedMotor::onMotorTickInterrupt()
+{
+    if(m_remainingPortionsCount != 0)
     {
-        m_remainingPortionCount--;
+        m_remainingPortionsCount--;
     }
 
-    if(m_remainingPortionCount == 0)
+    if(m_remainingPortionsCount == 0)
     {
         setMotorState(MOTOR_STOP);
     }
 }
 
-void MotorTask::MotorTaskMain(void *taskParam)
-{
-    log() << "MotorTask started";
-    MotorTask* task = static_cast<MotorTask*>(taskParam);
-    MotorTaskEvent event = MotorTaskEvent();
-    
-    while(true)
-    {
-        if(xQueueReceive(task->eventQueue(), &event, portTICK_PERIOD_MS*250) == errQUEUE_EMPTY)
-        {
-            continue;
-        }
-
-        log() << "MOTOR got event: " << event.eventType;
-
-        switch(event.eventType)
-        {
-            case MotorTaskEventType::MOTOR_DISPENSE_N:
-            {
-                task->m_remainingPortionCount += event.dispenseEventData.count + 1;
-                task->setMotorState(MotorState::MOTOR_FORWARD);
-                break;
-            }
-        }
-    }
-}
-
-void MotorTask::setMotorState(MotorState newState)
+void FeedMotor::setMotorState(MotorState newState)
 {
     spinCtlToggle(newState == MotorState::MOTOR_FORWARD || newState == MotorState::MOTOR_BACKWARD);
 
     GPIOPortA->PBSC = (newState) | ((newState ^ MotorState::MOTOR_BRAKE) << 16);
 }
 
-void MotorTask::spinCtlToggle(bool isEnabled)
+void FeedMotor::spinCtlToggle(bool isEnabled)
 {
     GPIOPortA->PBSC = SpinCtlEnablePin << (isEnabled? 0 : 16);
 }
 
-void MotorTask::setupSpinCtlInterrupt()
+void FeedMotor::setupSpinCtlInterrupt()
 {
     EXTI_InitType EXTI_InitStructure;
     NVIC_InitType NVIC_InitStructure;
@@ -87,7 +65,7 @@ void MotorTask::setupSpinCtlInterrupt()
     NVIC_Init(&NVIC_InitStructure);
 }
 
-void MotorTask::initMotorPins()
+void FeedMotor::initMotorPins()
 {
     GPIO_InitType GPIO_InitStructure;
 

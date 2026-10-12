@@ -3,25 +3,19 @@
 
 #include "n32g43x.h"
 
-#include "FreeRTOS.h"
-#include "queue.h"
-
-#include "StaticTask.h"
-#include "MotorTaskEvents.h"
-
-class MotorTask : StaticTask<256, 32, MotorTaskEvent>
+class FeedMotor
 {
 public:
-    MotorTask(QueueHandle_t* outEventQueue);
-    ~MotorTask() = default;
+    FeedMotor();
+    ~FeedMotor() = default;
 
     static const uint32_t SpinCtlReadEXTILine = EXTI_LINE9;
 
-    void onPortionDispensed();
+    void dispensePortions(uint8_t portionCount);
+
+    void onMotorTickInterrupt();
 
 protected:
-    static void MotorTaskMain(void* taskParam);
-
     static GPIO_Module* GPIOPortA;
     static const uint16_t MotorForwardPin = GPIO_PIN_0;
     static const uint16_t MotorBackwardPin = GPIO_PIN_1;
@@ -45,7 +39,7 @@ protected:
     void setupSpinCtlInterrupt();
     void initMotorPins();
 
-    uint8_t m_remainingPortionCount;
+    uint8_t m_remainingPortionsCount;
 };
 
 #endif
